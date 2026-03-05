@@ -5,6 +5,7 @@ import Upload from './pages/Upload'
 import MainLayout from './layout/MainLayout'
 import Meetings from './pages/Meetings'
 import Sentiments from './pages/Sentiments'
+import Chat from './pages/Chat'
 import PageNotFound from './pages/PageNotFound'
 function App() {
 
@@ -17,6 +18,7 @@ function App() {
           <Route path='/upload' element={<Upload />} />
           <Route path='/meetings' element={<Meetings />} />
           <Route path='/sentiments' element={<Sentiments />} />
+          <Route path='/chat' element={<Chat />} />
 
 
 

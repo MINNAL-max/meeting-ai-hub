@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { AxiosCall } from '../services/AxiosCall';
+import { toast } from 'react-toastify';
 
 const Upload = () => {
     const [uploadedFile, setUploadedFile] = useState([]);
@@ -8,6 +9,7 @@ const Upload = () => {
 
     const handleUploadOfFiles = async () => {
         setLoading(true)
+        setError("")
         try {
             const formData = new FormData();
             formData.append("project", "Client Onboarding Project");
@@ -15,16 +17,21 @@ const Upload = () => {
                 formData.append("files", file);
             });
             const result = await AxiosCall('POST', 'api/upload/', formData, true, true)
-            console.log(result);
+            if (result.status === 200) {
+                setUploadedFile([])
+                setError("")
+                toast(`Successfully uploaded ${result.data.files.length} file(s)`)
+                console.log(result.data);
+            } else {
+                setError("Upload failed. Please try again.")
+            }
 
         } catch (error) {
-            console.log(error)
+            setError("Error uploading files. Please try again.")
+            console.log(error);
         } finally {
             setLoading(false)
-
         }
-
-
     }
 
     return (
@@ -49,7 +56,6 @@ const Upload = () => {
                         error && <p className='text-red-500 text-sm'>{error}</p>
                     }
                 </div>
-
             </label>
             <input id='uploaded-file' hidden type="file" onChange={(e) => {
                 const files = Array.from(e.target.files)
@@ -69,13 +75,13 @@ const Upload = () => {
             }} multiple={true} />
 
             <div className='flex justify-center mt-5'>
-                <button disabled={uploadedFile.length == 0} onClick={handleUploadOfFiles} className='bg-blue-700 border rounded-lg px-8 py-2 flex justify-center item-center disabled:bg-blue-400'>
+                <button disabled={uploadedFile.length == 0 || loading} onClick={handleUploadOfFiles} className='bg-blue-700 border rounded-lg px-8 py-2 flex justify-center items-center disabled:bg-blue-400'>
                     <span>Upload </span>
                     {loading && <div className="animate-spin rounded-full h-4 w-4 border-b border-r border-white ms-1"></div>}
                 </button>
             </div>
 
-            {/* Uploaded Files Preview Lis
+            {/* Uploaded Files Preview List*/}
             {/* Upload Progress*/}
         </div>
     )
