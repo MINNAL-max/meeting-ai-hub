@@ -1,0 +1,30 @@
+.menu-btn {
+    padding: 12px;
+    border-radius: 40px;
+    background: rgba(255, 255, 255, 0.85);
+    color: black;
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.menu-btn:hover {
+    transform: translateX(10px);
+    background: white;
+}
+
+.animate-fade {
+    animation: fadeTitle 1s ease forwards;
+}
+
+@keyframes fadeTitle {
+    from {
+        opacity: 0;
+        transform: translateY(-15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
