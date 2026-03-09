@@ -5,20 +5,30 @@ const Sentiments = () => {
 
   const [transcripts, setTranscripts] = useState({});
   const [selectedTranscript, setSelectedTranscript] = useState(null);
+
   const [loading, setLoading] = useState(true);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const [sentimentData, setSentimentData] = useState(null);
+  const [speakerData, setSpeakerData] = useState(null);
+  const [flaggedSections, setFlaggedSections] = useState(null);
 
   useEffect(() => {
     fetchTranscripts();
   }, []);
 
-  const fetchTranscripts = async () => {
+  useEffect(() => {
+    if (selectedTranscript) {
+      fetchSentimentData();
+    }
+  }, [selectedTranscript]);
 
+  const fetchTranscripts = async () => {
     setLoading(true);
     setError("");
 
     try {
-
       const result = await AxiosCall("GET", "api/list/", {}, false, false);
 
       if (result.status === 200) {
@@ -28,21 +38,58 @@ const Sentiments = () => {
       }
 
     } catch (error) {
-
       console.log(error);
       setError("Error loading transcripts");
-
     } finally {
-
       setLoading(false);
-
     }
+  };
 
+  const fetchSentimentData = async () => {
+
+    setAnalysisLoading(true);
+
+    try {
+
+      const sentiment = await AxiosCall(
+        "GET",
+        `api/transcript/${selectedTranscript}/sentiment/`,
+        {},
+        false,
+        false
+      );
+
+      const speaker = await AxiosCall(
+        "GET",
+        `api/transcript/${selectedTranscript}/speaker-sentiment/`,
+        {},
+        false,
+        false
+      );
+
+      const flagged = await AxiosCall(
+        "GET",
+        `api/transcript/${selectedTranscript}/flagged-sections/`,
+        {},
+        false,
+        false
+      );
+
+      if (sentiment.status === 200) setSentimentData(sentiment.data);
+      if (speaker.status === 200) setSpeakerData(speaker.data);
+      if (flagged.status === 200) setFlaggedSections(flagged.data);
+
+    } catch (error) {
+      console.log(error);
+      setError("Failed to analyze sentiment");
+    } finally {
+      setAnalysisLoading(false);
+    }
   };
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div>
         <h1 className="text-2xl font-semibold">Sentiment Analysis</h1>
         <p className="text-slate-400">Loading transcripts...</p>
       </div>
@@ -51,20 +98,21 @@ const Sentiments = () => {
 
   const allTranscripts = [];
 
-  Object.keys(transcripts).forEach((project) => {
-    transcripts[project].forEach((t) => {
+  Object.keys(transcripts).forEach(project => {
+    transcripts[project].forEach(t => {
       allTranscripts.push({ ...t, project });
     });
   });
 
   return (
+
     <div className="space-y-8">
 
-      {/* Header */}
+      {/* HEADER */}
 
       <div className="flex justify-end">
 
-        <div className="text-right bg-gray-900/50 backdrop-blur-xl px-10 py-6 rounded-2xl border border-white/20 shadow-xl">
+        <div className="text-right bg-gray-900/40 backdrop-blur-xl px-10 py-6 rounded-2xl border border-white/20 shadow-xl">
 
           <h1 className="text-5xl font-extrabold uppercase tracking-[6px] text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-400 to-indigo-500">
             SENTIMENTS
@@ -79,18 +127,14 @@ const Sentiments = () => {
       </div>
 
       {error && (
-        <div className="flex justify-end">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-900/40 backdrop-blur-md border border-red-400/30 text-red-300 text-sm shadow-lg">
-            ⚠ {error}
-          </div>
-        </div>
+        <div className="text-red-400">{error}</div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* Meeting List */}
+        {/* LEFT PANEL */}
 
-        <div className="lg:col-span-1 bg-gray-900/40 backdrop-blur-xl border border-white/20 rounded-xl p-4 shadow-lg">
+        <div className="bg-gray-900/40 backdrop-blur-xl border border-white/20 rounded-xl p-4 shadow-lg">
 
           <h2 className="text-lg font-semibold mb-4 text-white">
             Select a Meeting
@@ -100,23 +144,23 @@ const Sentiments = () => {
 
             {allTranscripts.length > 0 ? (
 
-              allTranscripts.map((transcript) => (
+              allTranscripts.map((t) => (
 
                 <div
-                  key={transcript.id}
-                  onClick={() => setSelectedTranscript(transcript.id)}
-                  className={`p-3 rounded cursor-pointer transition ${selectedTranscript === transcript.id
+                  key={t.id}
+                  onClick={() => setSelectedTranscript(t.id)}
+                  className={`p-3 rounded cursor-pointer transition ${selectedTranscript === t.id
                       ? "bg-purple-500/60"
                       : "bg-gray-800/50 hover:bg-gray-700/60"
                     }`}
                 >
 
                   <p className="font-semibold text-sm truncate">
-                    {transcript.file_name}
+                    {t.file_name}
                   </p>
 
                   <p className="text-xs text-slate-400">
-                    {transcript.project}
+                    {t.project}
                   </p>
 
                 </div>
@@ -125,9 +169,7 @@ const Sentiments = () => {
 
             ) : (
 
-              <p className="text-slate-400">
-                No transcripts found
-              </p>
+              <p className="text-slate-400">No transcripts found</p>
 
             )}
 
@@ -135,80 +177,103 @@ const Sentiments = () => {
 
         </div>
 
-        {/* Sentiment Panel */}
+        {/* RIGHT PANEL */}
 
         <div className="lg:col-span-2 bg-gray-900/40 backdrop-blur-xl border border-white/20 rounded-xl p-6 shadow-lg">
 
-          {selectedTranscript ? (
+          {!selectedTranscript && (
+            <div className="text-center text-slate-400 py-16">
+              Select a transcript to analyze sentiment
+            </div>
+          )}
 
-            <div className="space-y-6">
+          {analysisLoading && (
+            <div className="text-center py-10 text-slate-300">
+              Analyzing meeting sentiment...
+            </div>
+          )}
 
-              <div>
+          {sentimentData && sentimentData.timeline && (
 
-                <h3 className="text-xl font-semibold mb-2">
-                  {
-                    allTranscripts.find(
-                      (t) => t.id === selectedTranscript
-                    )?.file_name
-                  }
-                </h3>
+            <div className="space-y-4">
 
-                <p className="text-slate-400 text-sm">
-                  Sentiment insights for this meeting
-                </p>
+              <h3 className="text-xl font-semibold">
+                Sentiment Timeline
+              </h3>
 
-              </div>
+              {sentimentData.timeline.map((segment, index) => (
 
-              <div className="space-y-4">
+                <div
+                  key={index}
+                  className="p-3 bg-gray-800/60 rounded-lg"
+                >
 
-                <div className="p-4 bg-gray-800/60 rounded-lg">
-                  <h4 className="font-semibold mb-1">
-                    Sentiment Timeline Chart
-                  </h4>
-                  <p className="text-slate-400 text-sm">
-                    Requires backend endpoint:
-                    /api/transcript/{selectedTranscript}/sentiment/
-                  </p>
+                  <div className="text-sm text-gray-300">
+                    {segment.time}
+                  </div>
+
+                  <div className="text-xs text-gray-400">
+                    {segment.segment_text}
+                  </div>
+
                 </div>
 
-                <div className="p-4 bg-gray-800/60 rounded-lg">
-                  <h4 className="font-semibold mb-1">
-                    Speaker Sentiment Breakdown
-                  </h4>
-                  <p className="text-slate-400 text-sm">
-                    Requires backend endpoint:
-                    /api/transcript/{selectedTranscript}/speaker-sentiment/
-                  </p>
-                </div>
+              ))}
 
-                <div className="p-4 bg-gray-800/60 rounded-lg">
-                  <h4 className="font-semibold mb-1">
-                    Flagged Sections
-                  </h4>
-                  <p className="text-slate-400 text-sm">
-                    Requires backend endpoint:
-                    /api/transcript/{selectedTranscript}/flagged-sections/
-                  </p>
-                </div>
+            </div>
 
-                <div className="p-4 bg-gray-800/60 rounded-lg">
-                  <h4 className="font-semibold mb-1">
-                    Chat Interface
-                  </h4>
-                  <p className="text-slate-400 text-sm">
-                    Requires backend endpoint:
-                    /api/transcript/{selectedTranscript}/chat/
-                  </p>
-                </div>
+          )}
+
+          {speakerData && speakerData.speakers && (
+
+            <div className="mt-8">
+
+              <h3 className="text-xl font-semibold mb-4">
+                Speaker Sentiment
+              </h3>
+
+              <div className="grid grid-cols-2 gap-4">
+
+                {speakerData.speakers.map((speaker, i) => (
+
+                  <div key={i} className="bg-gray-800/60 p-4 rounded-lg">
+
+                    <p className="font-semibold">{speaker.speaker}</p>
+
+                    <p className="text-xs text-gray-400">
+                      {speaker.sentiment}
+                    </p>
+
+                  </div>
+
+                ))}
 
               </div>
 
             </div>
 
-          ) : (
+          )}
 
-            <div className="text-slate-400 text-center py-16">
-              Select a transcript to view sentiment analysis
+          {flaggedSections && flaggedSections.flagged_sections && (
+
+            <div className="mt-8">
+
+              <h3 className="text-xl font-semibold mb-4">
+                Flagged Sections
+              </h3>
+
+              {flaggedSections.flagged_sections.map((section, i) => (
+
+                <div key={i} className="bg-gray-800/60 p-4 rounded-lg mb-2">
+
+                  <p className="text-xs text-gray-400">{section.time}</p>
+
+                  <p className="text-sm">{section.text_preview}</p>
+
+                </div>
+
+              ))}
+
             </div>
 
           )}
@@ -218,7 +283,9 @@ const Sentiments = () => {
       </div>
 
     </div>
+
   );
+
 };
 
 export default Sentiments;

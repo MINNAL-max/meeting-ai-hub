@@ -1,14 +1,13 @@
 import axios from "axios"
 import { baseUrl } from "./BaseUrl"
 
-export const AxiosCall = async (method, endpoint, dataList, headerData, isFormdata) => {
+export const AxiosCall =async (method, endpoint, dataList, headerData, isFormdata) => {
     try {
         const url = baseUrl + endpoint
-        const body = {
+        let body = {
             method,
             url,
             data: dataList,
-
         }
         if (headerData) {
             // const token = localStorage.getItem('authToken')
@@ -21,7 +20,7 @@ export const AxiosCall = async (method, endpoint, dataList, headerData, isFormda
         const response = await axios(body)
         return response
     } catch (error) {
-        console.log(error);
-        return error
+        console.log("AxiosCall error:", error);
+        throw error  // Throw the error instead of returning it
     }
 }

@@ -2,14 +2,15 @@ import React, { useState, useEffect, useRef } from "react";
 import { AxiosCall } from "../services/AxiosCall";
 
 const Chat = () => {
+
     const [messages, setMessages] = useState([
         {
             id: "welcome",
             type: "assistant",
             content:
-                "Hello! I'm your meeting intelligence chatbot. I can answer questions across all your meeting transcripts. Ask about decisions, action items, speakers, or anything discussed in your meetings.",
-            sources: [],
-        },
+                "Hello! I'm your meeting intelligence chatbot. Ask me about decisions, action items, speakers, or anything discussed in your meetings.",
+            sources: []
+        }
     ]);
 
     const [inputValue, setInputValue] = useState("");
@@ -17,6 +18,7 @@ const Chat = () => {
     const [error, setError] = useState("");
     const [selectedProject, setSelectedProject] = useState("");
     const [projects, setProjects] = useState([]);
+
     const messagesEndRef = useRef(null);
 
     useEffect(() => {
@@ -28,17 +30,25 @@ const Chat = () => {
     }, [messages]);
 
     const fetchProjects = async () => {
+
         try {
+
             const result = await AxiosCall("GET", "api/list/", null, false, false);
+
             if (result.status === 200) {
                 setProjects(Object.keys(result.data));
             }
+
         } catch (err) {
+
             console.log(err);
+
         }
+
     };
 
     const handleSendMessage = async (e) => {
+
         e.preventDefault();
 
         if (!inputValue.trim()) return;
@@ -47,46 +57,59 @@ const Chat = () => {
             id: `user-${Date.now()}`,
             type: "user",
             content: inputValue,
-            sources: [],
+            sources: []
         };
 
-        setMessages((prev) => [...prev, userMessage]);
+        setMessages(prev => [...prev, userMessage]);
+
         setInputValue("");
         setLoading(true);
         setError("");
 
         try {
+
             const queryData = {
                 query: inputValue,
-                ...(selectedProject && { project: selectedProject }),
+                ...(selectedProject && { project: selectedProject })
             };
 
             const result = await AxiosCall("POST", "api/query/", queryData, true, false);
 
             if (result.status === 200) {
+
                 const assistantMessage = {
                     id: `assistant-${Date.now()}`,
                     type: "assistant",
                     content: result.data.answer,
-                    sources: result.data.sources || [],
+                    sources: result.data.sources || []
                 };
 
-                setMessages((prev) => [...prev, assistantMessage]);
+                setMessages(prev => [...prev, assistantMessage]);
+
             } else {
+
                 setError("Failed to get response.");
+
             }
+
         } catch (err) {
+
             console.log(err);
             setError("Error communicating with chatbot.");
+
         } finally {
+
             setLoading(false);
+
         }
+
     };
 
     return (
+
         <div className="space-y-8">
 
-            {/* Header */}
+            {/* HEADER */}
 
             <div className="flex justify-end">
 
@@ -104,11 +127,11 @@ const Chat = () => {
 
             </div>
 
-            {/* Chat Container */}
+            {/* CHAT CONTAINER */}
 
             <div className="bg-gray-900/40 backdrop-blur-xl border border-white/20 rounded-xl shadow-lg flex flex-col h-[70vh]">
 
-                {/* Top Controls */}
+                {/* PROJECT FILTER */}
 
                 <div className="border-b border-white/10 p-4 flex items-center gap-4">
 
@@ -120,20 +143,24 @@ const Chat = () => {
                         className="bg-gray-800 text-white px-3 py-1 rounded border border-gray-700 text-sm"
                     >
                         <option value="">All Projects</option>
-                        {projects.map((project) => (
+
+                        {projects.map(project => (
+
                             <option key={project} value={project}>
                                 {project}
                             </option>
+
                         ))}
+
                     </select>
 
                 </div>
 
-                {/* Messages */}
+                {/* MESSAGES */}
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
 
-                    {messages.map((msg) => (
+                    {messages.map(msg => (
 
                         <div
                             key={msg.id}
@@ -153,11 +180,16 @@ const Chat = () => {
 
                                     <div className="mt-3 border-t border-gray-600 pt-3">
 
-                                        <p className="text-xs text-gray-400 mb-2">Sources</p>
+                                        <p className="text-xs text-gray-400 mb-2">
+                                            Sources
+                                        </p>
 
                                         {msg.sources.map((s, i) => (
 
-                                            <div key={i} className="bg-gray-700 p-2 rounded text-xs mb-1">
+                                            <div
+                                                key={i}
+                                                className="bg-gray-700 p-2 rounded text-xs mb-1"
+                                            >
 
                                                 <p className="font-semibold">{s.file_name}</p>
 
@@ -181,8 +213,12 @@ const Chat = () => {
 
                     {loading && (
 
-                        <div className="text-gray-300 text-sm">
-                            Analyzing transcripts...
+                        <div className="flex items-center gap-2 text-gray-300">
+
+                            <div className="animate-spin rounded-full h-4 w-4 border-b border-r border-blue-500"></div>
+
+                            <span className="text-sm">Analyzing transcripts...</span>
+
                         </div>
 
                     )}
@@ -199,7 +235,7 @@ const Chat = () => {
 
                 </div>
 
-                {/* Input */}
+                {/* INPUT */}
 
                 <div className="border-t border-white/10 p-4">
 
@@ -225,7 +261,7 @@ const Chat = () => {
                     </form>
 
                     <p className="text-xs text-gray-400 mt-2">
-                        Example: “What decisions were made?” or “What tasks does John have?”
+                        Try asking: “What decisions were made?” or “What tasks does John have?”
                     </p>
 
                 </div>
@@ -233,7 +269,9 @@ const Chat = () => {
             </div>
 
         </div>
+
     );
+
 };
 
 export default Chat;
