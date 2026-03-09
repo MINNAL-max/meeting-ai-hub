@@ -12,7 +12,7 @@ Instead of manually reviewing large transcripts, the system automatically analyz
 
 Watch the full project demonstration:
 
-[https://drive.google.com/drive/folders/17xuoBKIlCZk4G_eTix1QXAnPqd60F5gC?usp=drive_link](https://drive.google.com/drive/folders/17xuoBKIlCZk4G_eTix1QXAnPqd60F5gC?usp=drive_link)
+[https://drive.google.com/file/d/1FeF69flr2EKSyl52WCU4fv6dBzNg3W-n/view?usp=drive_link]
 
 ---
 
@@ -156,13 +156,13 @@ meeting-intelligence/
 ### Backend
 
 ```bash
-git clone https://github.com/ardra-m-siva/meeting-intelligence-server.git
+https://github.com/MINNAL-max/meeting-ai-hub.git
 ```
 
 ### Frontend
 
 ```bash
-git clone https://github.com/ardra-m-siva/meeting-intelligence.git
+https://github.com/MINNAL-max/MEETING-AI-SERVER.git
 ```
 
 ---
